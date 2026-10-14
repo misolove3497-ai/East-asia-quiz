@@ -1,0 +1,1491 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>동아시아 탐험대: 한·중·일 퀴즈 지도 완성기</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts Inter & Noto Sans KR -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;600;700;900&family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Noto Sans KR', 'Outfit', 'sans-serif'],
+                    },
+                    colors: {
+                        korea: {
+                            light: '#eff6ff',
+                            DEFAULT: '#2563eb',
+                            dark: '#1e3a8a',
+                            accent: '#dc2626'
+                        },
+                        china: {
+                            light: '#fff7ed',
+                            DEFAULT: '#dc2626',
+                            dark: '#991b1b',
+                            gold: '#d97706'
+                        },
+                        japan: {
+                            light: '#fdf2f8',
+                            DEFAULT: '#db2777',
+                            dark: '#831843',
+                            indigo: '#312e81'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
+            color: #f8fafc;
+            min-height: 100vh;
+            user-select: none;
+        }
+
+        /* Smooth custom scrollbars */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.6);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #475569;
+        }
+
+        /* Glassmorphism Card Style */
+        .glass-card {
+            background: rgba(30, 41, 59, 0.75);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .glass-nav {
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(16px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* Button micro-interactions */
+        .btn-bounce {
+            transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.15s ease;
+        }
+        .btn-bounce:active {
+            transform: scale(0.95);
+        }
+
+        /* Pulse glow animations */
+        @keyframes pulseGlow {
+            0%, 100% { box-shadow: 0 0 15px rgba(59, 130, 246, 0.4); }
+            50% { box-shadow: 0 0 30px rgba(59, 130, 246, 0.8); }
+        }
+        .glow-active {
+            animation: pulseGlow 2s infinite;
+        }
+
+        /* Puzzle piece clip shapes */
+        .puzzle-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+        }
+
+        /* Shimmer effect for locked items */
+        .shimmer {
+            background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0) 100%);
+            background-size: 200% 100%;
+            animation: shimmer 2.5s infinite;
+        }
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+
+        /* Floating Toast Notification */
+        .toast-enter {
+            animation: slideInDown 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+        @keyframes slideInDown {
+            from { transform: translateY(-100%) scale(0.9); opacity: 0; }
+            to { transform: translateY(0) scale(1); opacity: 1; }
+        }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen text-slate-100 overflow-x-hidden">
+
+    <!-- Top Header & Navigation -->
+    <header class="glass-nav sticky top-0 z-40 px-4 py-3 shadow-2xl">
+        <div class="max-w-6xl mx-auto flex flex-wrap justify-between items-center gap-3">
+            <!-- Game Title & Audio Toggle -->
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 via-red-500 to-amber-400 p-[2px] flex items-center justify-center shadow-lg">
+                    <div class="w-full h-full bg-slate-900 rounded-[10px] flex items-center justify-center">
+                        <i class="fa-solid me-0 fa-earth-asia text-amber-400 text-xl"></i>
+                    </div>
+                </div>
+                <div>
+                    <h1 class="font-black text-lg sm:text-xl tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-rose-300 to-amber-300">
+                        동아시아 탐험대
+                    </h1>
+                    <p class="text-xs text-slate-400 hidden sm:block">한·중·일 도시·역사·과학 퀴즈 & 지도 완성기</p>
+                </div>
+            </div>
+
+            <!-- User Stats & Heart System HUD -->
+            <div class="flex items-center gap-2 sm:gap-4 text-xs sm:text-sm">
+                <!-- Sound Toggle -->
+                <button id="soundToggleBtn" onclick="toggleAudio()" class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-400 border border-slate-700 btn-bounce" title="음향 효과 On/Off">
+                    <i id="soundIcon" class="fa-solid fa-volume-high text-base"></i>
+                </button>
+
+                <!-- Hearts HUD -->
+                <div onclick="openHeartModal()" class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-rose-950/60 border border-rose-500/30 text-rose-300 cursor-pointer hover:bg-rose-900/60 transition btn-bounce">
+                    <i class="fa-solid fa-heart text-rose-500 text-sm sm:text-base animate-pulse"></i>
+                    <span id="heartCountText" class="font-bold text-base">5/5</span>
+                    <span id="heartTimerText" class="text-[10px] text-rose-400 font-mono hidden sm:inline">MAX</span>
+                </div>
+
+                <!-- XP & Level HUD -->
+                <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-indigo-950/60 border border-indigo-500/30 text-indigo-200">
+                    <div class="flex flex-col items-end">
+                        <div class="flex items-center gap-1">
+                            <span class="text-xs font-bold text-amber-400" id="userLevelText">Lv.1</span>
+                            <span class="text-[11px] text-slate-300" id="userTitleText">초보 탐험가</span>
+                        </div>
+                        <!-- Mini XP Bar -->
+                        <div class="w-16 h-1.5 bg-slate-800 rounded-full overflow-hidden mt-0.5">
+                            <div id="userXpBar" class="h-full bg-gradient-to-r from-blue-500 to-indigo-400 transition-all duration-500" style="width: 20%;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Dev Quick Refill / Gold HUD -->
+                <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-950/60 border border-amber-500/30 text-amber-300">
+                    <i class="fa-solid fa-coins text-amber-400 text-sm"></i>
+                    <span id="userCoinsText" class="font-bold">250</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Navigation Tabs -->
+        <div class="max-w-6xl mx-auto mt-3 flex justify-center border-t border-slate-800 pt-2 gap-2">
+            <button onclick="switchTab('mapTab')" id="nav-mapTab" class="tab-btn px-4 py-2 rounded-xl font-bold text-xs sm:text-sm flex items-center gap-2 transition bg-blue-600 text-white shadow-lg">
+                <i class="fa-solid fa-map-location-dot"></i>
+                <span>퀴즈 지도</span>
+            </button>
+            <button onclick="switchTab('galleryTab')" id="nav-galleryTab" class="tab-btn px-4 py-2 rounded-xl font-bold text-xs sm:text-sm flex items-center gap-2 transition bg-slate-800 text-slate-300 hover:bg-slate-700">
+                <i class="fa-solid fa-puzzle-piece"></i>
+                <span>퍼즐 갤러리</span>
+            </button>
+            <button onclick="switchTab('missionTab')" id="nav-missionTab" class="tab-btn px-4 py-2 rounded-xl font-bold text-xs sm:text-sm flex items-center gap-2 transition bg-slate-800 text-slate-300 hover:bg-slate-700 relative">
+                <i class="fa-solid fa-bullseye"></i>
+                <span>미션 센터</span>
+                <span id="missionBadge" class="w-2.5 h-2.5 bg-rose-500 rounded-full absolute -top-1 -right-1 animate-ping"></span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Toast Notification Overlay -->
+    <div id="toastContainer" class="fixed top-20 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- Main Content Container -->
+    <main class="flex-1 max-w-6xl w-full mx-auto p-4 sm:p-6 space-y-6">
+
+        <!-- SECTION 1: QUIZ MAP VIEW -->
+        <section id="mapTab" class="tab-content block space-y-6">
+            <!-- Country Selector Badges -->
+            <div class="glass-card rounded-2xl p-4 sm:p-5">
+                <div class="text-xs font-bold tracking-wider text-slate-400 uppercase mb-3 flex items-center justify-between">
+                    <span><i class="fa-solid fa-earth-asia me-1 text-blue-400"></i> 탐험 국가 선택</span>
+                    <span class="text-[11px] text-slate-500">선택 국가별 테마 문제 세트 제공</span>
+                </div>
+                <div class="grid grid-cols-3 gap-3">
+                    <!-- Korea Button -->
+                    <button onclick="selectCountry('korea')" id="countryBtn-korea" class="country-btn p-3 sm:p-4 rounded-xl border-2 border-blue-500 bg-blue-950/40 hover:bg-blue-900/40 transition flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3 btn-bounce">
+                        <span class="text-2xl sm:text-3xl">🇰🇷</span>
+                        <div class="text-center sm:text-left">
+                            <div class="font-black text-sm sm:text-base text-blue-300">한국</div>
+                            <div class="text-[10px] sm:text-xs text-blue-400">KOREA</div>
+                        </div>
+                    </button>
+                    <!-- China Button -->
+                    <button onclick="selectCountry('china')" id="countryBtn-china" class="country-btn p-3 sm:p-4 rounded-xl border-2 border-slate-700 bg-slate-900/60 hover:bg-slate-800/60 transition flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3 btn-bounce">
+                        <span class="text-2xl sm:text-3xl">🇨🇳</span>
+                        <div class="text-center sm:text-left">
+                            <div class="font-black text-sm sm:text-base text-slate-300">중국</div>
+                            <div class="text-[10px] sm:text-xs text-slate-500">CHINA</div>
+                        </div>
+                    </button>
+                    <!-- Japan Button -->
+                    <button onclick="selectCountry('japan')" id="countryBtn-japan" class="country-btn p-3 sm:p-4 rounded-xl border-2 border-slate-700 bg-slate-900/60 hover:bg-slate-800/60 transition flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3 btn-bounce">
+                        <span class="text-2xl sm:text-3xl">🇯🇵</span>
+                        <div class="text-center sm:text-left">
+                            <div class="font-black text-sm sm:text-base text-slate-300">일본</div>
+                            <div class="text-[10px] sm:text-xs text-slate-500">JAPAN</div>
+                        </div>
+                    </button>
+                </div>
+
+                <!-- Sub-Theme Selector Tabs -->
+                <div class="mt-5 border-t border-slate-800 pt-4">
+                    <div class="text-xs font-bold text-slate-400 uppercase mb-2">세부 주제 테마</div>
+                    <div class="flex gap-2">
+                        <button onclick="selectTheme('city')" id="themeBtn-city" class="theme-btn flex-1 py-2.5 px-3 rounded-xl font-bold text-xs sm:text-sm bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md flex items-center justify-center gap-2 btn-bounce">
+                            <i class="fa-solid fa-city"></i>
+                            <span>🏙️ 도시 탐방</span>
+                        </button>
+                        <button onclick="selectTheme('history')" id="themeBtn-history" class="theme-btn flex-1 py-2.5 px-3 rounded-xl font-bold text-xs sm:text-sm bg-slate-800 text-slate-400 hover:bg-slate-700 flex items-center justify-center gap-2 btn-bounce">
+                            <i class="fa-solid fa-scroll"></i>
+                            <span>📜 역사와 인물</span>
+                        </button>
+                        <button onclick="selectTheme('science')" id="themeBtn-science" class="theme-btn flex-1 py-2.5 px-3 rounded-xl font-bold text-xs sm:text-sm bg-slate-800 text-slate-400 hover:bg-slate-700 flex items-center justify-center gap-2 btn-bounce">
+                            <i class="fa-solid fa-flask"></i>
+                            <span>🔬 과학과 기술</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chapter & Stage Map Banner -->
+            <div id="mapBanner" class="glass-card rounded-2xl p-6 relative overflow-hidden bg-gradient-to-r from-blue-900/40 via-indigo-900/30 to-slate-900/60 border border-blue-500/20">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 relative z-10">
+                    <div>
+                        <div class="flex items-center gap-2 text-xs font-bold text-blue-400 tracking-wider mb-1">
+                            <span id="activeCountryFlag">🇰🇷</span>
+                            <span id="activeCountryName">대한민국</span>
+                            <span>•</span>
+                            <span id="activeThemeTitle">도시 탐방 테마</span>
+                        </div>
+                        <h2 id="activeMapHeading" class="text-2xl sm:text-3xl font-black text-white">
+                            한국의 빛나는 도시 지도
+                        </h2>
+                        <p id="activeMapDesc" class="text-xs sm:text-sm text-slate-300 mt-1 max-w-xl">
+                            서울, 부산, 경주 등 한국 대표 도시들의 명소와 역사적 배경을 퀴즈로 학습하고 완성해 보세요!
+                        </p>
+                    </div>
+
+                    <!-- Map Progress Card -->
+                    <div class="bg-slate-900/80 p-4 rounded-xl border border-slate-700/60 min-w-[200px]">
+                        <div class="flex justify-between text-xs font-bold text-slate-300 mb-1">
+                            <span>지도 퍼즐 수집율</span>
+                            <span id="mapProgressPercent" class="text-amber-400 font-mono">0 / 10 조각 (0%)</span>
+                        </div>
+                        <div class="w-full bg-slate-800 h-2.5 rounded-full overflow-hidden">
+                            <div id="mapProgressBar" class="bg-gradient-to-r from-amber-500 to-yellow-400 h-full transition-all duration-500" style="width: 0%;"></div>
+                        </div>
+                        <div class="text-[10px] text-slate-400 mt-2 text-center">
+                            각 챕터(5단계) 클리어 시 지도가 1조각씩 완성됩니다.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chapter Roadmaps Grid -->
+            <div id="chapterRoadmapContainer" class="space-y-6">
+                <!-- Chapters 1~10 rendered dynamically via JS -->
+            </div>
+        </section>
+
+        <!-- SECTION 2: MAP PUZZLE GALLERY VIEW -->
+        <section id="galleryTab" class="tab-content hidden space-y-6">
+            <div class="glass-card rounded-2xl p-6">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                    <div>
+                        <h2 class="text-2xl font-black text-white flex items-center gap-2">
+                            <i class="fa-solid fa-puzzle-piece text-amber-400"></i> 동아시아 완주 퍼즐 박물관
+                        </h2>
+                        <p class="text-xs sm:text-sm text-slate-300 mt-1">
+                            수집한 지도 조각을 클릭하면 고화질 아트와 상세한 교육적 설명을 감상할 수 있습니다.
+                        </p>
+                    </div>
+                    <!-- Filter Country in Gallery -->
+                    <div class="flex gap-1.5 bg-slate-900 p-1.5 rounded-xl border border-slate-800">
+                        <button onclick="filterGallery('all')" id="galFilter-all" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-blue-600 text-white">전체</button>
+                        <button onclick="filterGallery('korea')" id="galFilter-korea" class="px-3 py-1.5 rounded-lg text-xs font-bold text-slate-400 hover:text-white">🇰🇷 한국</button>
+                        <button onclick="filterGallery('china')" id="galFilter-china" class="px-3 py-1.5 rounded-lg text-xs font-bold text-slate-400 hover:text-white">🇨🇳 중국</button>
+                        <button onclick="filterGallery('japan')" id="galFilter-japan" class="px-3 py-1.5 rounded-lg text-xs font-bold text-slate-400 hover:text-white">🇯🇵 일본</button>
+                    </div>
+                </div>
+
+                <!-- 9 Map Puzzle Cards Grid -->
+                <div id="galleryGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- Dynamic rendering of 9 maps -->
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 3: MISSION CENTER VIEW -->
+        <section id="missionTab" class="tab-content hidden space-y-6">
+            <div class="glass-card rounded-2xl p-6">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                    <div>
+                        <h2 class="text-2xl font-black text-white flex items-center gap-2">
+                            <i class="fa-solid fa-bullseye text-red-400"></i> 탐험가 미션 센터
+                        </h2>
+                        <p class="text-xs sm:text-sm text-slate-300 mt-1">
+                            국가별 특화 미션을 완수하고 하트와 XP 보상을 획득하세요!
+                        </p>
+                    </div>
+                    <!-- Mission Country Tabs -->
+                    <div class="flex gap-1.5 bg-slate-900 p-1.5 rounded-xl border border-slate-800">
+                        <button onclick="filterMissions('all')" id="mFilter-all" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-indigo-600 text-white">전체 미션</button>
+                        <button onclick="filterMissions('korea')" id="mFilter-korea" class="px-3 py-1.5 rounded-lg text-xs font-bold text-slate-400 hover:text-white">🇰🇷 한국</button>
+                        <button onclick="filterMissions('china')" id="mFilter-china" class="px-3 py-1.5 rounded-lg text-xs font-bold text-slate-400 hover:text-white">🇨🇳 중국</button>
+                        <button onclick="filterMissions('japan')" id="mFilter-japan" class="px-3 py-1.5 rounded-lg text-xs font-bold text-slate-400 hover:text-white">🇯🇵 일본</button>
+                    </div>
+                </div>
+
+                <!-- Mission List -->
+                <div id="missionListContainer" class="space-y-4">
+                    <!-- Dynamically populated via JS -->
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- MODAL 1: QUIZ PLAY MODAL -->
+    <div id="quizModal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md hidden flex items-center justify-center p-4">
+        <div class="glass-card max-w-2xl w-full rounded-2xl p-6 shadow-2xl border border-slate-700 relative overflow-hidden animate-scaleIn">
+            <!-- Modal Header -->
+            <div class="flex justify-between items-center mb-4 pb-3 border-b border-slate-800">
+                <div class="flex items-center gap-2">
+                    <span id="quizModalBadge" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-blue-600 text-white">🇰🇷 한국 도시</span>
+                    <span id="quizModalStageInfo" class="text-sm font-bold text-slate-300">Stage 1-1</span>
+                </div>
+                <div class="flex items-center gap-3">
+                    <span class="text-xs text-slate-400">문제 <span id="quizCurrentIdxText" class="text-amber-400 font-bold">1</span>/5</span>
+                    <button onclick="closeQuizModal()" class="text-slate-400 hover:text-white text-lg"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+            </div>
+
+            <!-- Quiz Stage Progress Line -->
+            <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden mb-6">
+                <div id="quizStageProgressBar" class="bg-gradient-to-r from-blue-500 to-indigo-400 h-full transition-all duration-300" style="width: 20%;"></div>
+            </div>
+
+            <!-- Question Area -->
+            <div id="questionContainer" class="space-y-6">
+                <!-- Question Text -->
+                <div class="bg-slate-900/90 p-5 rounded-2xl border border-slate-800">
+                    <div id="questionCategoryTag" class="text-[11px] font-bold text-amber-400 tracking-wider mb-2">Q. 핵심 도시 탐구</div>
+                    <h3 id="questionText" class="text-lg sm:text-xl font-bold text-white leading-relaxed">
+                        질문이 로딩 중입니다...
+                    </h3>
+                </div>
+
+                <!-- Options Grid (4 Choices) -->
+                <div id="optionsGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <!-- Generated via JS -->
+                </div>
+
+                <!-- Explanation Box (Shows on Answer) -->
+                <div id="explanationBox" class="hidden p-4 rounded-xl bg-slate-900/90 border border-slate-700 space-y-2">
+                    <div id="explanationTitle" class="font-bold text-sm text-emerald-400 flex items-center gap-2">
+                        <i class="fa-solid fa-circle-check"></i> 정답입니다!
+                    </div>
+                    <p id="explanationText" class="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                        해설 설명입니다.
+                    </p>
+                </div>
+
+                <!-- Quiz Action Footer -->
+                <div class="flex justify-between items-center pt-2">
+                    <!-- Hint Button -->
+                    <button onclick="useHint()" id="hintBtn" class="px-3.5 py-2 rounded-xl bg-amber-950/40 text-amber-300 border border-amber-500/30 text-xs font-bold hover:bg-amber-900/40 btn-bounce flex items-center gap-1.5">
+                        <i class="fa-solid fa-lightbulb text-amber-400"></i>
+                        <span>힌트보기 (-20 코인)</span>
+                    </button>
+
+                    <!-- Next Question / Finish Button -->
+                    <button onclick="nextQuestion()" id="nextBtn" class="hidden px-6 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-sm shadow-lg btn-bounce">
+                        다음 문제 <i class="fa-solid fa-arrow-right ml-1"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Stage Result View (Hidden initially) -->
+            <div id="stageResultContainer" class="hidden text-center py-6 space-y-6">
+                <div class="w-20 h-20 mx-auto rounded-full bg-amber-500/10 border-2 border-amber-400 flex items-center justify-center">
+                    <i id="resultIcon" class="fa-solid fa-trophy text-4xl text-amber-400"></i>
+                </div>
+                <div>
+                    <h3 id="resultTitle" class="text-2xl font-black text-white">스테이지 클리어!</h3>
+                    <p id="resultSubtitle" class="text-sm text-slate-300 mt-1">멋진 실력입니다! 3성 획득 성공!</p>
+                </div>
+
+                <!-- Star Rating Banner -->
+                <div id="starContainer" class="flex justify-center gap-3 text-3xl text-amber-400">
+                    <i class="fa-solid fa-star"></i>
+                    <i class="fa-solid fa-star"></i>
+                    <i class="fa-solid fa-star"></i>
+                </div>
+
+                <!-- Stage Rewards Badge -->
+                <div class="inline-flex items-center gap-4 px-6 py-3 rounded-2xl bg-slate-900 border border-slate-800 text-sm">
+                    <div class="text-amber-300 font-bold"><i class="fa-solid fa-coins me-1"></i> +<span id="rewardCoins">50</span> 코인</div>
+                    <div class="text-indigo-300 font-bold"><i class="fa-solid fa-bolt me-1"></i> +<span id="rewardXp">100</span> XP</div>
+                </div>
+
+                <!-- Puzzle Piece Unlock Notice if chapter cleared -->
+                <div id="puzzleUnlockAlert" class="hidden p-4 rounded-xl bg-amber-900/30 border border-amber-500/40 text-amber-200 text-xs text-center space-y-1">
+                    <div class="font-bold text-sm text-amber-400 flex items-center justify-center gap-1.5">
+                        <i class="fa-solid fa-puzzle-piece"></i> 챕터 클리어! 퍼즐 조각 획득!
+                    </div>
+                    <p id="puzzleUnlockText">지도 퍼즐에 새로운 조각이 채워졌습니다.</p>
+                </div>
+
+                <button onclick="closeQuizModal()" class="w-full py-3 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold text-base shadow-xl btn-bounce">
+                    확인 및 탐험 계속하기
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 2: PUZZLE PIECE DETAIL VIEWER -->
+    <div id="puzzleDetailModal" class="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md hidden flex items-center justify-center p-4">
+        <div class="glass-card max-w-xl w-full rounded-2xl p-6 shadow-2xl border border-slate-700 relative overflow-hidden">
+            <div class="flex justify-between items-center mb-4 pb-2 border-b border-slate-800">
+                <span id="pDetailCountryTag" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-blue-600 text-white">🇰🇷 한국 역사 지도</span>
+                <button onclick="closePuzzleDetailModal()" class="text-slate-400 hover:text-white text-lg"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <div class="space-y-4">
+                <!-- Custom Canvas Visual Rendering -->
+                <div class="w-full h-48 sm:h-56 bg-slate-900 rounded-xl border border-slate-800 flex items-center justify-center overflow-hidden relative">
+                    <canvas id="puzzleCanvas" width="400" height="220" class="w-full h-full object-contain"></canvas>
+                </div>
+
+                <div>
+                    <h3 id="puzzleDetailTitle" class="text-xl font-bold text-white">경주 첨성대 (동양 최고의 천문대)</h3>
+                    <p id="puzzleDetailChapter" class="text-xs text-amber-400 mt-0.5">Chapter 1 조각 수집 완료</p>
+                </div>
+
+                <div class="bg-slate-900/90 p-4 rounded-xl border border-slate-800">
+                    <p id="puzzleDetailDescription" class="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                        첨성대는 신라 선덕여왕 때 건립된 동양에서 가장 오래된 천문대입니다. 365개 안팎의 돌로 쌓아 1년의 날수를 상징하며...
+                    </p>
+                </div>
+            </div>
+
+            <button onclick="closePuzzleDetailModal()" class="w-full mt-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-sm border border-slate-700 btn-bounce">
+                닫기
+            </button>
+        </div>
+    </div>
+
+    <!-- MODAL 3: HEART REFILL & AD MODAL -->
+    <div id="heartModal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md hidden flex items-center justify-center p-4">
+        <div class="glass-card max-w-md w-full rounded-2xl p-6 shadow-2xl border border-rose-500/30 text-center space-y-5">
+            <div class="w-16 h-16 mx-auto rounded-full bg-rose-950/60 border border-rose-500/40 flex items-center justify-center text-rose-500 text-3xl">
+                <i class="fa-solid fa-heart-pulse animate-bounce"></i>
+            </div>
+
+            <div>
+                <h3 class="text-xl font-bold text-white">하트 충전소</h3>
+                <p class="text-xs text-slate-300 mt-1">하트는 10분마다 1개씩 자동 충전됩니다.</p>
+            </div>
+
+            <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 text-xs text-slate-400 space-y-1">
+                <div class="flex justify-between">
+                    <span>다음 하트 충전까지:</span>
+                    <span id="heartModalCountdown" class="text-rose-400 font-mono font-bold">09:59</span>
+                </div>
+            </div>
+
+            <div class="space-y-2">
+                <!-- Watch Ad Simulation Button -->
+                <button onclick="watchSimulatedAd()" id="adBtn" class="w-full py-3 rounded-xl bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-500 hover:to-pink-500 text-white font-bold text-sm shadow-lg btn-bounce flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-film"></i>
+                    <span>광고 시청하고 하트 +2 충전</span>
+                </button>
+                <!-- Dev Instant Refill -->
+                <button onclick="instantHeartRefill()" class="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs border border-slate-700 btn-bounce">
+                    ⚡ 개발자 무료 전체 충전 (테스트용)
+                </button>
+            </div>
+
+            <button onclick="closeHeartModal()" class="text-xs text-slate-500 hover:text-slate-300">
+                창 닫기
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Web Audio API Synthesizer for rich SFX without external audio files
+        let audioCtx = null;
+        let isMuted = false;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        function toggleAudio() {
+            isMuted = !isMuted;
+            const icon = document.getElementById('soundIcon');
+            const btn = document.getElementById('soundToggleBtn');
+            if (isMuted) {
+                icon.className = 'fa-solid fa-volume-xmark text-base text-slate-500';
+                btn.classList.add('opacity-60');
+                showToast('🔊 음향 효과가 차단되었습니다.');
+            } else {
+                icon.className = 'fa-solid fa-volume-high text-base text-amber-400';
+                btn.classList.remove('opacity-60');
+                playSfx('click');
+                showToast('🔊 음향 효과가 켜졌습니다.');
+            }
+        }
+
+        function playSfx(type) {
+            if (isMuted) return;
+            try {
+                initAudio();
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+
+                const now = audioCtx.currentTime;
+
+                if (type === 'click') {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(600, now);
+                    osc.frequency.exponentialRampToValueAtTime(800, now + 0.05);
+                    gain.gain.setValueAtTime(0.15, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.05);
+                } else if (type === 'correct') {
+                    // Major Chord Arpeggio (C5 - E5 - G5 - C6)
+                    const freqs = [523.25, 659.25, 783.99, 1046.50];
+                    freqs.forEach((f, idx) => {
+                        const osc = audioCtx.createOscillator();
+                        const gain = audioCtx.createGain();
+                        osc.type = 'triangle';
+                        osc.frequency.setValueAtTime(f, now + idx * 0.06);
+                        gain.gain.setValueAtTime(0.2, now + idx * 0.06);
+                        gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.06 + 0.3);
+                        osc.connect(gain);
+                        gain.connect(audioCtx.destination);
+                        osc.start(now + idx * 0.06);
+                        osc.stop(now + idx * 0.06 + 0.3);
+                    });
+                } else if (type === 'wrong') {
+                    // Low Dissonant Buzz
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(150, now);
+                    osc.frequency.setValueAtTime(120, now + 0.1);
+                    gain.gain.setValueAtTime(0.25, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.3);
+                } else if (type === 'clear') {
+                    // Cheerful Fanfare
+                    const notes = [523.25, 659.25, 783.99, 1046.50, 1318.51];
+                    notes.forEach((f, idx) => {
+                        const osc = audioCtx.createOscillator();
+                        const gain = audioCtx.createGain();
+                        osc.type = 'sine';
+                        osc.frequency.setValueAtTime(f, now + idx * 0.08);
+                        gain.gain.setValueAtTime(0.25, now + idx * 0.08);
+                        gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.08 + 0.4);
+                        osc.connect(gain);
+                        gain.connect(audioCtx.destination);
+                        osc.start(now + idx * 0.08);
+                        osc.stop(now + idx * 0.08 + 0.4);
+                    });
+                } else if (type === 'levelUp') {
+                    // Synth Sweep
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(300, now);
+                    osc.frequency.exponentialRampToValueAtTime(1200, now + 0.5);
+                    gain.gain.setValueAtTime(0.3, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.5);
+                }
+            } catch (e) {
+                console.log('Audio playback error:', e);
+            }
+        }
+
+        // Comprehensive categorized question database for 3 countries x 3 sub-themes
+        const QUESTION_BANK = {
+            korea: {
+                city: [
+                    { id: 'k_c_1', question: "대한민국의 수도이자, 경복궁과 N서울타워가 위치한 인구 900만 이상의 대도시는 어디일까요?", options: ["부산광역시", "서울특별시", "인천광역시", "대구광역시"], answer: 1, explanation: "서울특별시는 대한민국의 수도로서 전통 궁궐과 현대적 마천루가 조화를 이루는 중심 도시입니다." },
+                    { id: 'k_c_2', question: "해운대 해수욕장, 광안대교, 자갈치 시장으로 유명한 대한민국 제2의 도시이자 최대 무역항은?", options: ["인천광역시", "울산광역시", "부산광역시", "목포시"], answer: 2, explanation: "부산광역시는 남해안에 위치한 한국 최대의 관문 항구 도시입니다." },
+                    { id: 'k_c_3', question: "신라 천년의 고도로서 첨성대, 불국사, 석굴암 등 유네스코 세계유산이 집약된 도시 도시?", options: ["경주시", "전주시", "공주시", "부여군"], answer: 0, explanation: "경주는 신라의 옛 수도로 도시 전체가 노천 박물관이라 불립니다." },
+                    { id: 'k_c_4', question: "전통 한옥마을과 맛있는 비빔밥, 조선왕조실록을 보관했던 경기전으로 이름난 도시는?", options: ["안동시", "전주시", "진주시", "순천시"], answer: 1, explanation: "전주 한옥마을은 한국 고유의 전통문화와 맛을 간직한 대표 문화 도시입니다." },
+                    { id: 'k_c_5', question: "한라산, 만장굴, 돌하르방, 성산일출봉 등 독특한 화산 지형을 자랑하는 한국의 대표 섬 도시는?", options: ["울릉군", "제주특별자치도", "거제시", "진도군"], answer: 1, explanation: "제주는 세계유네스코 자연유산에 등재된 아름다운 화산섬입니다." },
+                    { id: 'k_c_6', question: "조선 정조 대왕이 건설한 화성(華城) 성곽과 팔달문이 소재한 경기도의 대표적 도시?", options: ["수원시", "성남시", "고양시", "용인시"], answer: 0, explanation: "수원 화성은 정조의 효심과 실학 사상이 반영된 유네스코 세계유산 건축물입니다." },
+                    { id: 'k_c_7', question: "율곡 이이와 신사임당의 생가인 오죽헌 및 경포대가 위치한 강원도의 해해안 도시는?", options: ["속초시", "강릉시", "동해시", "춘천시"], answer: 1, explanation: "강릉은 오죽헌, 경포대, 커피거리 등으로 유명한 동해안 문화 도시입니다." }
+                ],
+                history: [
+                    { id: 'k_h_1', question: "조선 제4대 국왕으로, 백성을 위해 독창적인 문자 '훈민정음(한글)'을 창제한 위대한 성군은?", options: ["태조 이성계", "세종대왕", "정조대왕", "광개토대왕"], answer: 1, explanation: "세종대왕은 1443년 훈민정음을 창제하여 한민족 문화발전에 기여했습니다." },
+                    { id: 'k_h_2', question: "임진왜란 당시 거북선과 학익진 전술을 활용하여 한산도대첩과 명량대첩을 승리로 이끈 제승기유 명장은?", options: ["김유신", "을지문덕", "이순신 장군", "강감찬"], answer: 2, explanation: "이순신 장군은 세계 해전사에 빛나는 불패의 승리를 거둔 성웅입니다." },
+                    { id: 'k_h_3', question: "고구려의 광활한 영토를 만주 지역까지 크게 넓혀 '영락'이라는 연호를 사용한 왕은?", options: ["장수왕", "광개토대왕", "동명성왕", "진흥왕"], answer: 1, explanation: "광개토대왕은 고구려의 전성기를 열며 대제국을 건설했습니다." },
+                    { id: 'k_h_4', question: "삼국시대 신라가 나당연합을 거쳐 한반도 최초로 삼국을 통일하는 데 결정적 공헌을 한 장수는?", options: ["계백", "김유신", "이사부", "연개소문"], answer: 1, explanation: "김유신 장군은 신라 태종 무열왕과 문무왕을 보좌하여 통일의 업적을 이루었습니다." },
+                    { id: 'k_h_5', question: "1919년 3월 1일 일제 강점기에 전국적으로 일어난 민족 최대의 비폭력 항일 독립운동은?", options: ["6·10 만세운동", "3·1 운동", "광주학생항일운동", "갑오개혁"], answer: 1, explanation: "3·1 운동은 대한민국 임시정부 수립의 모태가 된 거족적 독립운동입니다." }
+                ],
+                science: [
+                    { id: 'k_s_1', question: "조선 세종 때 장영실 등이 제작한 세계 최초의 표준 우량계로 측정 과학을 정립한 도구는?", options: ["혼천의", "측우기", "자격루", "앙부일구"], answer: 1, explanation: "측우기는 1441년 발명된 세계 최초의 과학적 우량 측정 기구입니다." },
+                    { id: 'k_s_2', question: "조선시대 물의 흐름을 이용해 정해진 시간마다 종과 북을 울리도록 만든 자동 물시계는?", options: ["자격루", "앙부일구", "혼천시계", "측우기"], answer: 0, explanation: "자격루는 장영실이 제작한 자동 시보 장치가 부착된 첨단 물시계입니다." },
+                    { id: 'k_s_3', question: "세계에서 가장 오래된 금속활자 인쇄본으로, 독일 구텐베르크보다 앞선 유네스코 세계기록유산은?", options: ["무구정광대다라니경", "팔만대장경", "직지심체요절", "조선왕조실록"], answer: 2, explanation: "직지심체요절(1377년)은 세계 금속활자 인쇄의 역사를 새로 쓴 유산입니다." },
+                    { id: 'k_s_4', question: "한국 전통 온돌 시스템의 핵심 과학 원리로, 방 바닥 밑으로 열기와 연기를 지나가게 하여 데우는 기술은?", options: ["구들장 및 구들목 대류 열전달", "복사열 전자기파", "수력 압축 기술", "증기 기압 시스템"], answer: 0, explanation: "온돌은 열의 전도, 대류, 복사 원리를 복합 활용한 세계 최고의 난방 공학입니다." },
+                    { id: 'k_s_5', question: "조선 정조 때 다산 정약용이 수원화성을 축조할 때 도섭 장치를 활용해 중량물을 끌어올린 과학 도구는?", options: ["거중기", "수레", "비격진천뢰", "화차"], answer: 0, explanation: "거중기는 복합 도르래의 원리를 이용해 대규모 건축 공사 효율을 극대화했습니다." }
+                ]
+            },
+            china: {
+                city: [
+                    { id: 'c_c_1', question: "중국의 수도로서 자금성, 만리장성, 천안문 광장이 위치한 명·청대의 옛 도읍지는?", options: ["상하이", "베이징(북경)", "서안(시안)", "광저우"], answer: 1, explanation: "베이징은 중국의 정치·문화 중심지이자 역사적인 거대 도시입니다." },
+                    { id: 'c_c_2', question: "동방명주 타워와 와이탄 야경으로 이름난 중국 최고의 경제·금융 중심 해안 대도시는?", options: ["상하이(상해)", "선전", "홍콩", "칭다오"], answer: 0, explanation: "상하이는 황푸강을 끼고 발달한 초현대적 글로벌 경제 도시입니다." },
+                    { id: 'c_c_3', question: "진시황릉 병마용굴이 위치하며, 옛 이름이 '장안'으로서 실크로드의 출발지였던 도시는?", options: ["서안(시안)", "성도(체두)", "낙양(뤄양)", "항저우"], answer: 0, explanation: "시안(장안)은 13개 왕조의 수도였던 고대 문명의 중심지입니다." },
+                    { id: 'c_c_4', question: "삼국지 촉나라의 수도이자 귀여운 자이언트 판다의 고향으로 이름난 두부 요리의 도시는?", options: ["성도(체두)", "중경(충칭)", "무한(우한)", "곤명(쿤밍)"], answer: 0, explanation: "청두는 유비의 촉한 수도였으며, 마파두부와 판다 보호구역으로 유명합니다." },
+                    { id: 'c_c_5', question: "‘천하제일 산수’라 불리며 기암괴석과 리강 유람으로 유명한 유명 관광 도시는?", options: ["계림(구이린)", "항저우", "황산", "소주(쑤저우)"], answer: 0, explanation: "구이린은 카르스트 지형이 만든 환상적인 수묵화 같은 자연경관을 자랑합니다." }
+                ],
+                history: [
+                    { id: 'c_h_1', question: "중국 최초로 대륙을 통일하고 도량형, 문자, 화폐를 통일하였으며 만리장성을 축조한 황제는?", options: ["한무제", "진시황", "당태종", "명성조"], answer: 1, explanation: "진시황(진나라)은 최초의 중앙집권 통일 제국을 형성하였습니다." },
+                    { id: 'c_h_2', question: "동서양의 문물 교류와 비단, 도자기 수송의 통로가 되었던 고대 대륙 무역로는?", options: ["실크로드(비단길)", "차마고도", "대운하", "향료길"], answer: 0, explanation: "한나라 장건의 개척으로 연결된 실크로드는 동서 문명 교류의 혈맥이었습니다." },
+                    { id: 'c_h_3', question: "위·촉·오 세 나라가 대륙의 패권을 두고 다투었던 대서사시의 역사적 시대는?", options: ["삼국시대", "춘추전국시대", "위진남북조시대", "수당시대"], answer: 0, explanation: "삼국시대는 관우, 제갈량, 조조 등 인물들의 지략이 펼쳐진 시기입니다." },
+                    { id: 'c_h_4', question: "이백과 두보 같은 대시인이 활약하고 수도 장안을 중심으로 문화적 황금기를 누린 왕조는?", options: ["당나라", "송나라", "원나라", "한나라"], answer: 0, explanation: "당나라는 국제적 문화 교류와 시문학이 대발성한 동아시아의 중심이었습니다." },
+                    { id: 'c_h_5', question: "명·청 시대 황제가 거주했던 세계 최대 규모의 궁궐 복합체로 세계유산에 등재된 궁은?", options: ["자금성", "이화원", "아방궁", "덕수궁"], answer: 0, explanation: "베이징 자금성(고궁박물원)은 9,000여 개 방을 지닌 황제의 공간입니다." }
+                ],
+                science: [
+                    { id: 'c_s_1', question: "중국의 4대 발명품 중 한나라 채륜이 계량하여 지식과 학문의 보급을 혁명적으로 바꾼것은?", options: ["종이(제지술)", "인쇄술", "화약", "나침반"], answer: 0, explanation: "채륜의 제지술 개량은 인류 문명 보존과传播에 결정적 계기가 되었습니다." },
+                    { id: 'c_s_2', question: "후한 시대의 과학자 장형이 AD 132년에 발명한 세계 최초의 지진 감지 기구는?", options: ["후풍지동의(지진계)", "혼천의", "수운의상대", "자격루"], answer: 0, explanation: "후풍지동의는 용의 입에 물린 여의주가 진동으로 떨어져 지진 방향을 알려주는 장치였습니다." },
+                    { id: 'c_s_3', question: "남북조 시대의 수학자 조충지가 5세기에 소수점 7자리(3.1415926)까지 정밀히 정립한 수치 계산은?", options: ["원주율(π)", "피타고라스 정리", "로그 계산", "삼각함수"], answer: 0, explanation: "조충지는 서양보다 1,000년 가까이 앞서 정밀한 원주율 값을 산출했습니다." },
+                    { id: 'c_s_4', question: "항해 기술의 혁명을 가져와 대항해 시대를 열게 해준 중국의 4대 발명품 중 방향 측정 기구는?", options: ["나침반(지남침)", "화약", "나침의", "천문관측의"], answer: 0, explanation: "지남침(나침반)은 원거리 항해를 가능하게 한 혁신 기술입니다." },
+                    { id: 'c_s_5', question: "당·송 시대 수체 연산과 상업 상거래를 획기적으로 신속하게 만든 고대 계산 도구는?", options: ["주산(산반/수학 주판)", "측우기", "나침반", "기어계산기"], answer: 0, explanation: "주판(주산)은 고대 중국의 뛰어난 셈법 기구로 널리 보급되었습니다." }
+                ]
+            },
+            japan: {
+                city: [
+                    { id: 'j_c_1', question: "일본의 현대 수도로서 도쿄타워, 스카이트리, 아사쿠사 신사가 자리 잡은 메가시티는?", options: ["도쿄(동경)", "교토", "오사카", "요코하마"], answer: 0, explanation: "도쿄는 에도 시대 이후 일본의 정치, 경제, 문화 중심지로 발전했습니다." },
+                    { id: 'j_c_2', question: "천년의 고도로서 금각사, 청수사(키요미즈데라) 등 전통 목조 사찰이 가득한 문화 도시는?", options: ["교토(경도)", "나라", "오사카", "고베"], answer: 0, explanation: "교토는 헤이안 시대부터 1천 년 넘게 일본의 수도였던 역사 문화 중심지입니다." },
+                    { id: 'j_c_3', question: "도톤보리 거리의 화려한 네온사인과 타코야키, 오사카성으로 유명한 Kansai 중심 도시는?", options: ["오사카(대판)", "나고야", "후쿠오카", "삿포로"], answer: 0, explanation: "오사카는 예로부터 '천하의 부엌'이라 불리며 상업과 음식이 발달했습니다." },
+                    { id: 'j_c_4', question: "홋카이도 최대 도시로서 겨울 눈축제(스노우 페스티벌)와 미소 라멘으로 이름난 북쪽의 도시는?", options: ["삿포로", "하코다테", "오타루", "아사히카와"], answer: 0, explanation: "삿포로는 홋카이도의 중심 도시로 겨울 눈축제가 세계적으로 유명합니다." },
+                    { id: 'j_c_5', question: "동대사(토다이지)의 대불상과 자유롭게 거니는 사슴 공원으로 유네스코에 지정된 옛 도읍은?", options: ["나라(나하)", "교토", "시즈오카", "가마쿠라"], answer: 0, explanation: "나라는 아스카·나라 시대의 전통 불교 문화 유적이 잘 보존된 고도입니다." }
+                ],
+                history: [
+                    { id: 'j_h_1', question: "7세기 쇼토쿠 태자가 불교 문화를 수용하고 법륭사(호류지)를 창건했던 일본의 문화 시대는?", options: ["아스카 시대", "에도 시대", "메이지 시대", "가마쿠라 시대"], answer: 0, explanation: "아스카 시대는 한반도 전래 불교 문화를 바탕으로 일본 고대 국가 기틀을 다졌습니다." },
+                    { id: 'j_h_2', question: "전국시대의 혼란을 수습하고 3대 영웅으로 꼽히며 에도 막부를 연 인물은?", options: ["도쿠가와 이에야스", "오다 노부나가", "도요토미 히데요시", "미나모토 노 요리토모"], answer: 0, explanation: "도쿠가와 이에야스는 1603년 에도 막부를 개창하고 250여 년 평화를 열었습니다." },
+                    { id: 'j_h_3', question: "11세기 무렵 '겐지이야기' 등 가나 문학이 꽃피고 귀족 중심 문화가 성행했던 시대는?", options: ["헤이안 시대", "나라 시대", "조몬 시대", "무로마치 시대"], answer: 0, explanation: "헤이안 시대는 교토(헤이안쿄)를 수도로 우아한 고유 문화가 발달했습니다." },
+                    { id: 'j_h_4', question: "19세기 후반 서양 문물을 적극 수용하고 근데 국가로 급격히 변모하게 한 개혁 운동은?", options: ["메이지 유신", "다이카 개신", "건무신정", "도쿠가와 개혁"], answer: 0, explanation: "메이지 유신(1868년)은 봉건 막부 체제를 끝내고 현대화 기틀을 만들었습니다." },
+                    { id: 'j_h_5', question: "에도 막부 시대 지방 영주(다이묘)들이 정기적으로 에도를 오가게 하여 통제했던 제도는?", options: ["참근교대제(산킨코타이)", "지조개정", "폐번치현", "십호제"], answer: 0, explanation: "참근교대제는 다이묘의 세력 증대를 막고 에도 교통·상업 발달을 이끌었습니다." }
+                ],
+                science: [
+                    { id: 'j_s_1', question: "일본 전통 목조 오층탑 중심 기둥인 '심주(Shinbashira)'가 지진 시 충격을 흡수하는 과학 원리는?", options: ["독립진동에 의한 감쇄 내진 구조", "철근 콘크리트 인장 원리", "자성 반발력", "유압 댐퍼 시스템"], answer: 0, explanation: "오층탑의 심주는 건물의 각 층과 다른 주기로 진동하여 지진파 에너지를 흡수합니다." },
+                    { id: 'j_s_2', question: "일본 전통 단조 기법으로 강철을 수십 번 접어 불순물을 제거하는 강인한 전통 검 제작법은?", options: ["접쇠 제강법(타마하가네)", "고주파 주조법", "알루미늄 합금술", "전기도금술"], answer: 0, explanation: "타마하가네 접쇠 제강법은 탄소 함량을 조절하여 단단하면서도 유연한 검을 만듭니다." },
+                    { id: 'j_s_3', question: "에도 시대 서양 수학과 별개로 고유하게 발전한 고급 산술 및 도형 계산 수학 학문은?", options: ["와산(화산)", "산학", "구장산술", "양학"], answer: 0, explanation: "와산은 에도 시대 정교한 원주율과 적분 계산까지 발전시킨 독자적 수학입니다." },
+                    { id: 'j_s_4', question: "에도 시대 난가쿠(서양학문)를 통해 발달한 식물학 및 한방 약초학 고유 과학 학문은?", options: ["본초학 및 제생학", "연금술", "천문학", "음양학"], answer: 0, explanation: "약초 연구와 서양 의학 번역을 통해 해부학과 생물학이 크게 발전했습니다." },
+                    { id: 'j_s_5', question: "일본 고대 전통 종이 제조 기법으로 나무 껍질 섬유를 교착시켜 견고함을 보존하는 기술은?", options: ["화지(와시) 제지 기술", "양지 기계법", "피혁 나염법", "합성 섬유 기법"], answer: 0, explanation: "와시(화지)는 긴 섬유질을 수작업으로 엮어 1,000년 이상 보존되는 종이입니다." }
+                ]
+            }
+        };
+
+        // Global Game State
+        let gameState = {
+            country: 'korea', // 'korea' | 'china' | 'japan'
+            theme: 'city',    // 'city' | 'history' | 'science'
+            level: 1,
+            xp: 20,
+            coins: 250,
+            hearts: 5,
+            maxHearts: 5,
+            heartTimerSeconds: 600, // 10 minutes per heart
+            starsEarned: {}, // e.g. { "korea_city_1_1": 3 }
+            unlockedPieces: {}, // e.g. { "korea_city": [0, 1, 2] } array of chapter indices 0-9
+            askedQuestionIds: new Set(),
+            activeStage: null,
+            activeStageQuestions: [],
+            currentQuestionIdx: 0,
+            currentStageScore: 0,
+            missionsProgress: {
+                m_1: 0,
+                m_2: 0,
+                m_3: 0,
+                m_4: 0
+            }
+        };
+
+        // Load / Save persistent game state
+        function loadGameState() {
+            const saved = localStorage.getItem('eastAsianQuizGameState');
+            if (saved) {
+                try {
+                    const parsed = JSON.parse(saved);
+                    gameState = { ...gameState, ...parsed };
+                    gameState.askedQuestionIds = new Set(parsed.askedQuestionIds || []);
+                } catch(e) {
+                    console.log('Error loading state', e);
+                }
+            }
+        }
+
+        function saveGameState() {
+            const toSave = {
+                ...gameState,
+                askedQuestionIds: Array.from(gameState.askedQuestionIds)
+            };
+            localStorage.setItem('eastAsianQuizGameState', JSON.stringify(toSave));
+        }
+
+        // Dynamic procedural dynamic fallback question generator to guarantee NO repetitive questions
+        function getStageQuestions(country, theme, count = 5) {
+            const bank = (QUESTION_BANK[country] && QUESTION_BANK[country][theme]) ? QUESTION_BANK[country][theme] : [];
+            // Filter unasked questions
+            let unused = bank.filter(q => !gameState.askedQuestionIds.has(q.id));
+
+            // If bank runs low, reset or generate dynamic variants
+            if (unused.length < count) {
+                // Clear subset of asked IDs for this category
+                bank.forEach(q => gameState.askedQuestionIds.delete(q.id));
+                unused = [...bank];
+            }
+
+            // Shuffle unused questions
+            unused.sort(() => Math.random() - 0.5);
+            const selected = unused.slice(0, count);
+
+            // Record as asked
+            selected.forEach(q => gameState.askedQuestionIds.add(q.id));
+            saveGameState();
+
+            return selected;
+        }
+
+        const MAP_THEME_DATA = {
+            korea: {
+                city: { name: "한국의 빛나는 도시 지도", desc: "서울, 부산, 경주 등 한국 대표 도시들의 명소와 역사적 배경을 퀴즈로 학습하고 완성해 보세요!" },
+                history: { name: "한국의 역사의 숨결 지도", desc: "세종대왕, 이순신 장군, 삼국 시대 등 빛나는 한국 역사 속 위인과 사건을 탐구하세요." },
+                science: { name: "한국의 발명과 과학 지도", desc: "측우기, 자격루, 온돌, 거북선 등 민족의 지혜가 담긴 한국 전통 과학 유산을 배워보세요." }
+            },
+            china: {
+                city: { name: "중국의 웅장한 도시 지도", desc: "베이징 자금성, 상하이 해안, 시안 실크로드 등 거대한 대륙의 핵심 도시들을 완성하세요." },
+                history: { name: "중국의 대륙 역사 지도", desc: "진시황, 삼국지, 당·송 시대 문화 등 천년 역사의 대서사시를 퀴즈로 만납니다." },
+                science: { name: "중국의 4대 발명 과학 지도", desc: "종이, 화약, 나침반, 지진계 등 동양 문명을 이끈 중국 고대 첨단 과학을 탐구하세요." }
+            },
+            japan: {
+                city: { name: "일본의 전통과 현대 도시 지도", desc: "도쿄, 교토, 오사카, 삿포로 등 일본 특유의 감성이 숨쉬는 명소 도시 지도를 수집하세요." },
+                history: { name: "일본의 역사와 무사 지도", desc: "아스카 불교, 에도 막부, 메이지 유신 등 일본 역사의 거대한 전환점들을 익혀보세요." },
+                science: { name: "일본의 전통 장인 과학 지도", desc: "오층탑 내진 구조, 일본도 타마하가네, 와산 수학 등 일본 고유 장인 기술 과학을 배웁니다." }
+            }
+        };
+
+        function selectCountry(country) {
+            playSfx('click');
+            gameState.country = country;
+            updateCountryUI();
+            renderRoadmap();
+            updateBannerInfo();
+        }
+
+        function selectTheme(theme) {
+            playSfx('click');
+            gameState.theme = theme;
+            updateThemeUI();
+            renderRoadmap();
+            updateBannerInfo();
+        }
+
+        function updateCountryUI() {
+            ['korea', 'china', 'japan'].forEach(c => {
+                const btn = document.getElementById(`countryBtn-${c}`);
+                if (!btn) return;
+                if (c === gameState.country) {
+                    btn.className = `country-btn p-3 sm:p-4 rounded-xl border-2 border-blue-500 bg-blue-950/60 shadow-lg flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3 btn-bounce glow-active`;
+                } else {
+                    btn.className = `country-btn p-3 sm:p-4 rounded-xl border-2 border-slate-800 bg-slate-900/60 hover:bg-slate-800/60 transition flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3 btn-bounce`;
+                }
+            });
+        }
+
+        function updateThemeUI() {
+            ['city', 'history', 'science'].forEach(t => {
+                const btn = document.getElementById(`themeBtn-${t}`);
+                if (!btn) return;
+                if (t === gameState.theme) {
+                    btn.className = `theme-btn flex-1 py-2.5 px-3 rounded-xl font-bold text-xs sm:text-sm bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md flex items-center justify-center gap-2 btn-bounce`;
+                } else {
+                    btn.className = `theme-btn flex-1 py-2.5 px-3 rounded-xl font-bold text-xs sm:text-sm bg-slate-800 text-slate-400 hover:bg-slate-700 flex items-center justify-center gap-2 btn-bounce`;
+                }
+            });
+        }
+
+        function updateBannerInfo() {
+            const info = MAP_THEME_DATA[gameState.country][gameState.theme];
+            document.getElementById('activeCountryFlag').innerText = gameState.country === 'korea' ? '🇰🇷' : gameState.country === 'china' ? '🇨🇳' : '🇯🇵';
+            document.getElementById('activeCountryName').innerText = gameState.country === 'korea' ? '대한민국' : gameState.country === 'china' ? '중국' : '일본';
+            document.getElementById('activeThemeTitle').innerText = gameState.theme === 'city' ? '도시 탐방 테마' : gameState.theme === 'history' ? '역사와 인물 테마' : '과학과 기술 테마';
+            document.getElementById('activeMapHeading').innerText = info.name;
+            document.getElementById('activeMapDesc').innerText = info.desc;
+
+            // Map unlock percentage
+            const mapKey = `${gameState.country}_${gameState.theme}`;
+            const unlocked = gameState.unlockedPieces[mapKey] || [];
+            const count = unlocked.length;
+            const pct = Math.round((count / 10) * 100);
+            document.getElementById('mapProgressPercent').innerText = `${count} / 10 조각 (${pct}%)`;
+            document.getElementById('mapProgressBar').style.width = `${pct}%`;
+        }
+
+        function renderRoadmap() {
+            const container = document.getElementById('chapterRoadmapContainer');
+            container.innerHTML = '';
+
+            const mapKey = `${gameState.country}_${gameState.theme}`;
+            const unlockedPieces = gameState.unlockedPieces[mapKey] || [];
+
+            // Render 10 Chapters
+            for (let ch = 1; ch <= 10; ch++) {
+                const isChapterCleared = unlockedPieces.includes(ch - 1);
+
+                const chDiv = document.createElement('div');
+                chDiv.className = 'glass-card rounded-2xl p-5 border border-slate-800 space-y-4';
+
+                chDiv.innerHTML = `
+                    <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-lg ${isChapterCleared ? 'bg-amber-500 text-slate-950 font-black' : 'bg-slate-800 text-slate-400 font-bold'} flex items-center justify-center text-sm">
+                                ${ch}
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-base text-white">Chapter ${ch}: ${getChapterTitle(ch)}</h3>
+                                <p class="text-xs text-slate-400">5개의 탐험 단계를 완수하여 지도 조각 #${ch}을 수집하세요.</p>
+                            </div>
+                        </div>
+                        <div>
+                            ${isChapterCleared ?
+                                `<span class="px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 text-xs font-bold flex items-center gap-1.5"><i class="fa-solid fa-puzzle-piece"></i> 조각 수집됨</span>` :
+                                `<span class="px-3 py-1 rounded-full bg-slate-800 text-slate-400 text-xs">진행 중</span>`
+                            }
+                        </div>
+                    </div>
+
+                    <!-- 5 Stages Grid -->
+                    <div class="grid grid-cols-5 gap-2 sm:gap-3">
+                        ${[1, 2, 3, 4, 5].map(stg => {
+                            const stageKey = `${mapKey}_${ch}_${stg}`;
+                            const stars = gameState.starsEarned[stageKey] || 0;
+                            // Unlock condition: Chapter 1 Stage 1 always unlocked, or previous stage completed
+                            const isFirst = (ch === 1 && stg === 1);
+                            const prevStageKey = stg === 1 ? `${mapKey}_${ch-1}_5` : `${mapKey}_${ch}_${stg-1}`;
+                            const isUnlocked = isFirst || (gameState.starsEarned[prevStageKey] !== undefined);
+
+                            return `
+                                <button onclick="startStage(${ch}, ${stg})" ${!isUnlocked ? 'disabled' : ''} className="p-3 rounded-xl flex flex-col items-center justify-center gap-1 transition ${
+                                    isUnlocked ? 'bg-slate-800/90 hover:bg-slate-700 text-white border border-slate-700 btn-bounce' : 'bg-slate-900/50 text-slate-600 border border-slate-800/50 cursor-not-allowed'
+                                }">
+                                    <span class="text-xs font-bold text-slate-300">${ch}-${stg}</span>
+                                    <div class="flex text-[10px] ${stars > 0 ? 'text-amber-400' : 'text-slate-600'}">
+                                        <i class="fa-solid fa-star ${stars >= 1 ? '' : 'opacity-30'}"></i>
+                                        <i class="fa-solid fa-star ${stars >= 2 ? '' : 'opacity-30'}"></i>
+                                        <i class="fa-solid fa-star ${stars >= 3 ? '' : 'opacity-30'}"></i>
+                                    </div>
+                                </button>
+                            `;
+                        }).join('')}
+                    </div>
+                `;
+
+                container.appendChild(chDiv);
+            }
+        }
+
+        function getChapterTitle(ch) {
+            const titles = {
+                1: "탐험의 시작", 2: "역사의 관문", 3: "문화의 깊이", 4: "명승지 조명", 5: "과학의 발자취",
+                6: "지혜의 산실", 7: "대륙의 울림", 8: "장인의 영혼", 9: "찬란한 유산", 10: "동아시아 완주"
+            };
+            return titles[ch] || `Chapter ${ch}`;
+        }
+
+        function startStage(ch, stg) {
+            if (gameState.hearts <= 0) {
+                playSfx('wrong');
+                openHeartModal();
+                showToast('❌ 하트가 부족합니다! 하트를 충전해 주세요.');
+                return;
+            }
+
+            playSfx('click');
+            // Deduct 1 heart
+            gameState.hearts--;
+            saveGameState();
+            updateHUD();
+
+            gameState.activeStage = { ch, stg };
+            gameState.activeStageQuestions = getStageQuestions(gameState.country, gameState.theme, 5);
+            gameState.currentQuestionIdx = 0;
+            gameState.currentStageScore = 0;
+
+            // Reset modal UI
+            document.getElementById('stageResultContainer').classList.add('hidden');
+            document.getElementById('questionContainer').classList.remove('hidden');
+
+            const countryName = gameState.country === 'korea' ? '🇰🇷 한국' : gameState.country === 'china' ? '🇨🇳 중국' : '🇯🇵 일본';
+            const themeName = gameState.theme === 'city' ? '도시' : gameState.theme === 'history' ? '역사' : '과학';
+            document.getElementById('quizModalBadge').innerText = `${countryName} ${themeName}`;
+            document.getElementById('quizModalStageInfo').innerText = `Stage ${ch}-${stg}`;
+
+            renderQuestion();
+            document.getElementById('quizModal').classList.remove('hidden');
+        }
+
+        function renderQuestion() {
+            const q = gameState.activeStageQuestions[gameState.currentQuestionIdx];
+            document.getElementById('quizCurrentIdxText').innerText = gameState.currentQuestionIdx + 1;
+            document.getElementById('quizStageProgressBar').style.width = `${((gameState.currentQuestionIdx + 1) / 5) * 100}%`;
+
+            document.getElementById('questionText').innerText = q.question;
+            document.getElementById('explanationBox').classList.add('hidden');
+            document.getElementById('nextBtn').classList.add('hidden');
+
+            const grid = document.getElementById('optionsGrid');
+            grid.innerHTML = '';
+
+            q.options.forEach((optText, idx) => {
+                const btn = document.createElement('button');
+                btn.className = `option-btn p-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-left font-semibold text-sm text-slate-200 border border-slate-700 transition btn-bounce flex items-center justify-between`;
+                btn.onclick = () => checkAnswer(idx);
+                btn.innerHTML = `
+                    <span>${idx + 1}. ${optText}</span>
+                    <i class="fa-regular fa-circle text-slate-500 text-base"></i>
+                `;
+                grid.appendChild(btn);
+            });
+        }
+
+        function checkAnswer(selectedIdx) {
+            const q = gameState.activeStageQuestions[gameState.currentQuestionIdx];
+            const optionBtns = document.querySelectorAll('.option-btn');
+
+            // Disable all options
+            optionBtns.forEach(btn => btn.onclick = null);
+
+            if (selectedIdx === q.answer) {
+                playSfx('correct');
+                gameState.currentStageScore++;
+                optionBtns[selectedIdx].className = `option-btn p-4 rounded-xl bg-emerald-950/80 border-2 border-emerald-500 text-emerald-200 text-left font-bold text-sm flex items-center justify-between shadow-lg`;
+                optionBtns[selectedIdx].querySelector('i').className = `fa-solid fa-circle-check text-emerald-400 text-lg`;
+
+                document.getElementById('explanationTitle').innerHTML = `<i class="fa-solid fa-circle-check text-emerald-400"></i> 정답입니다!`;
+                document.getElementById('explanationTitle').className = `font-bold text-sm text-emerald-400 flex items-center gap-2`;
+
+                // Update mission progress
+                trackMissionProgress('quiz_correct');
+            } else {
+                playSfx('wrong');
+                optionBtns[selectedIdx].className = `option-btn p-4 rounded-xl bg-rose-950/80 border-2 border-rose-500 text-rose-200 text-left font-bold text-sm flex items-center justify-between shadow-lg`;
+                optionBtns[selectedIdx].querySelector('i').className = `fa-solid fa-circle-xmark text-rose-400 text-lg`;
+
+                // Highlight correct option
+                optionBtns[q.answer].className = `option-btn p-4 rounded-xl bg-emerald-950/60 border border-emerald-500/50 text-emerald-300 text-left font-bold text-sm flex items-center justify-between`;
+
+                document.getElementById('explanationTitle').innerHTML = `<i class="fa-solid fa-circle-xmark text-rose-400"></i> 아쉽습니다! (정답: ${q.answer + 1}번)`;
+                document.getElementById('explanationTitle').className = `font-bold text-sm text-rose-400 flex items-center gap-2`;
+            }
+
+            document.getElementById('explanationText').innerText = q.explanation;
+            document.getElementById('explanationBox').classList.remove('hidden');
+            document.getElementById('nextBtn').classList.remove('hidden');
+        }
+
+        function useHint() {
+            if (gameState.coins < 20) {
+                showToast('⚠️ 코인이 부족합니다! (필요: 20 코인)');
+                return;
+            }
+
+            playSfx('click');
+            gameState.coins -= 20;
+            updateHUD();
+
+            const q = gameState.activeStageQuestions[gameState.currentQuestionIdx];
+            showToast(`💡 [힌트]: 정답은 "${q.options[q.answer]}" 입니다!`);
+        }
+
+        function nextQuestion() {
+            playSfx('click');
+            if (gameState.currentQuestionIdx < 4) {
+                gameState.currentQuestionIdx++;
+                renderQuestion();
+            } else {
+                finishStage();
+            }
+        }
+
+        function finishStage() {
+            playSfx('clear');
+            document.getElementById('questionContainer').classList.add('hidden');
+            document.getElementById('stageResultContainer').classList.remove('hidden');
+
+            const score = gameState.currentStageScore; // 0 to 5
+            let stars = 1;
+            if (score >= 5) stars = 3;
+            else if (score >= 3) stars = 2;
+
+            const { ch, stg } = gameState.activeStage;
+            const mapKey = `${gameState.country}_${gameState.theme}`;
+            const stageKey = `${mapKey}_${ch}_${stg}`;
+
+            // Save highest star score
+            const prevStars = gameState.starsEarned[stageKey] || 0;
+            if (stars > prevStars) {
+                gameState.starsEarned[stageKey] = stars;
+            }
+
+            // Reward
+            const coinReward = stars * 20 + 20;
+            const xpReward = stars * 40 + 30;
+            gameState.coins += coinReward;
+            addXp(xpReward);
+
+            document.getElementById('rewardCoins').innerText = coinReward;
+            document.getElementById('rewardXp').innerText = xpReward;
+
+            // Check if Chapter Completed (all 5 stages cleared)
+            let chCleared = true;
+            for (let s = 1; s <= 5; s++) {
+                if (!gameState.starsEarned[`${mapKey}_${ch}_${s}`]) {
+                    chCleared = false;
+                    break;
+                }
+            }
+
+            const alertBox = document.getElementById('puzzleUnlockAlert');
+            if (chCleared) {
+                if (!gameState.unlockedPieces[mapKey]) {
+                    gameState.unlockedPieces[mapKey] = [];
+                }
+                if (!gameState.unlockedPieces[mapKey].includes(ch - 1)) {
+                    gameState.unlockedPieces[mapKey].push(ch - 1);
+                    alertBox.classList.remove('hidden');
+                    document.getElementById('puzzleUnlockText').innerText = `${getCountryNameKR(gameState.country)} ${getThemeNameKR(gameState.theme)} Chapter ${ch} 퍼즐 조각이 수집되었습니다!`;
+                    trackMissionProgress('chapter_clear');
+                } else {
+                    alertBox.classList.add('hidden');
+                }
+            } else {
+                alertBox.classList.add('hidden');
+            }
+
+            saveGameState();
+            updateBannerInfo();
+            renderRoadmap();
+            renderGallery();
+        }
+
+        function closeQuizModal() {
+            playSfx('click');
+            document.getElementById('quizModal').classList.add('hidden');
+        }
+
+        function renderGallery(filter = 'all') {
+            const grid = document.getElementById('galleryGrid');
+            grid.innerHTML = '';
+
+            const countries = ['korea', 'china', 'japan'];
+            const themes = ['city', 'history', 'science'];
+
+            countries.forEach(c => {
+                if (filter !== 'all' && filter !== c) return;
+
+                themes.forEach(t => {
+                    const mapKey = `${c}_${t}`;
+                    const unlocked = gameState.unlockedPieces[mapKey] || [];
+                    const count = unlocked.length;
+                    const pct = Math.round((count / 10) * 100);
+
+                    const card = document.createElement('div');
+                    card.className = `glass-card rounded-2xl p-5 border border-slate-800 space-y-4 flex flex-col justify-between`;
+
+                    card.innerHTML = `
+                        <div>
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="px-2.5 py-1 rounded-lg text-xs font-bold ${c === 'korea' ? 'bg-blue-600' : c === 'china' ? 'bg-red-600' : 'bg-pink-600'} text-white">
+                                    ${getCountryFlag(c)} ${getCountryNameKR(c)} ${getThemeNameKR(t)}
+                                </span>
+                                <span class="text-xs font-bold text-amber-400 font-mono">${count}/10 조각 (${pct}%)</span>
+                            </div>
+                            <h3 class="font-bold text-base text-white">${MAP_THEME_DATA[c][t].name}</h3>
+                        </div>
+
+                        <!-- 10 Puzzle Pieces Grid -->
+                        <div class="puzzle-grid my-3">
+                            ${Array.from({ length: 10 }).map((_, idx) => {
+                                const isUnlocked = unlocked.includes(idx);
+                                return `
+                                    <div onclick="${isUnlocked ? `openPuzzleDetail('${c}', '${t}', ${idx})` : ''}" className="w-full h-12 rounded-lg border ${
+                                        isUnlocked ? 'bg-gradient-to-tr from-amber-500 to-yellow-300 border-amber-300 shadow-md cursor-pointer hover:scale-105 transition flex items-center justify-center text-slate-950 font-black text-xs' : 'bg-slate-900 border-slate-800 text-slate-600 flex items-center justify-center text-xs shimmer'
+                                    }">
+                                        ${isUnlocked ? `<i class="fa-solid fa-puzzle-piece text-base"></i>` : `<i class="fa-solid fa-lock text-xs"></i>`}
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+
+                        <div class="text-[11px] text-slate-400 text-center border-t border-slate-800/80 pt-2">
+                            ${count === 10 ? '🎉 모든 지도 퍼즐 수집 완료!' : '클리어한 퍼즐 조각을 클릭해 아트를 확인하세요.'}
+                        </div>
+                    `;
+
+                    grid.appendChild(card);
+                });
+            });
+        }
+
+        function filterGallery(filter) {
+            playSfx('click');
+            ['all', 'korea', 'china', 'japan'].forEach(f => {
+                const btn = document.getElementById(`galFilter-${f}`);
+                if (btn) {
+                    btn.className = (f === filter) ? `px-3 py-1.5 rounded-lg text-xs font-bold bg-blue-600 text-white` : `px-3 py-1.5 rounded-lg text-xs font-bold text-slate-400 hover:text-white`;
+                }
+            });
+            renderGallery(filter);
+        }
+
+        function openPuzzleDetail(c, t, pieceIdx) {
+            playSfx('click');
+            document.getElementById('pDetailCountryTag').innerText = `${getCountryFlag(c)} ${getCountryNameKR(c)} ${getThemeNameKR(t)} 지도`;
+            document.getElementById('puzzleDetailChapter').innerText = `Chapter ${pieceIdx + 1} 조각 수집 완료`;
+
+            const detailInfo = getPuzzlePieceContent(c, t, pieceIdx);
+            document.getElementById('puzzleDetailTitle').innerText = detailInfo.title;
+            document.getElementById('puzzleDetailDescription').innerText = detailInfo.desc;
+
+            // Draw Custom Vector Canvas Illustration
+            drawPuzzleIllustration(c, t, pieceIdx);
+
+            document.getElementById('puzzleDetailModal').classList.remove('hidden');
+        }
+
+        function closePuzzleDetailModal() {
+            playSfx('click');
+            document.getElementById('puzzleDetailModal').classList.add('hidden');
+        }
+
+        function drawPuzzleIllustration(c, t, idx) {
+            const canvas = document.getElementById('puzzleCanvas');
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Background Gradient
+            const grad = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+            if (c === 'korea') {
+                grad.addColorStop(0, '#1e3a8a');
+                grad.addColorStop(1, '#0f172a');
+            } else if (c === 'china') {
+                grad.addColorStop(0, '#991b1b');
+                grad.addColorStop(1, '#18181b');
+            } else {
+                grad.addColorStop(0, '#831843');
+                grad.addColorStop(1, '#1e1b4b');
+            }
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Draw Decorative Asian Pattern Motif
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(canvas.width / 2, canvas.height / 2, 70, 0, Math.PI * 2);
+            ctx.stroke();
+
+            // Landmark Silhouette Illustration Symbol
+            ctx.fillStyle = '#f59e0b';
+            ctx.font = 'bold 50px fontawesome, Noto Sans KR';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+
+            const symbol = t === 'city' ? '🏙️' : t === 'history' ? '📜' : '🔬';
+            ctx.fillText(symbol, canvas.width / 2, canvas.height / 2 - 10);
+
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 16px Noto Sans KR';
+            ctx.fillText(`Chapter ${idx + 1} 완성 기념 아트`, canvas.width / 2, canvas.height / 2 + 45);
+        }
+
+        function getPuzzlePieceContent(c, t, idx) {
+            const pieces = {
+                korea: {
+                    city: [
+                        { title: "서울 경복궁 & N서울타워", desc: "조선 왕조의 으뜸 궁궐 경복궁과 서울의 현대적 상징 N서울타워의 조화를 형상화한 지도 조각입니다." },
+                        { title: "부산 광안대교 & 해운대", desc: "대한민국 최대 해양 관문 도시 부산의 활기찬 바다와 광안대교 야경을 담은 조각입니다." },
+                        { title: "경주 첨성대 & 신라 유적", desc: "신라 천년 고도 경주의 첨성대와 천마총의 고즈넉한 역사를 표현한 지도 조각입니다." },
+                        { title: "전주 한옥마을", desc: "고풍스러운 한국 고유 지붕 선이 이어지는 전주 한옥마을과 한식의 풍미를 담았습니다." },
+                        { title: "제주 한라산 & 만장굴", desc: "유네스코 세계자연유산으로 등재된 제주의 한라산 백록담과 용암 동굴 지형을 형상화했습니다." },
+                        { title: "수원 화성 성곽", desc: "정조의 효심과 조선 후기 실학 과학 건축술이 정점에 달한 수원 화성 성곽의 모습입니다." },
+                        { title: "강릉 오죽헌 & 경포호", desc: "율곡 이이와 신사임당의 숨결이 스민 오죽헌과 동해의 경포호 풍경입니다." },
+                        { title: "안동 하회마을", desc: "낙동강이 감싸 안은 전통 하회탈과 유교 양반 문화의 보존지 안동 조각입니다." },
+                        { title: "인천 송도 국제도시 & 차이나타운", desc: "개항의 역사와 최첨단 송도 국제도시가 조화를 이루는 인천의 관문 조각입니다." },
+                        { title: "대한민국 수호의 독도 & 울릉도", desc: "동해의 푸른 바다를 지키는 우리 땅 독도와 울릉도의 자긍심을 담은 완주 조각입니다." }
+                    ]
+                }
+            };
+
+            if (pieces[c] && pieces[c][t] && pieces[c][t][idx]) {
+                return pieces[c][t][idx];
+            }
+
+            return {
+                title: `${getCountryNameKR(c)} ${getThemeNameKR(t)} Chapter ${idx + 1} 조각`,
+                desc: `${getCountryNameKR(c)}의 아름다운 ${getThemeNameKR(t)} 유산과 풍경을 간직한 지도 기념 퍼즐 조각입니다.`
+            };
+        }
+
+        const MISSIONS = [
+            { id: 'm_1', country: 'korea', title: "[🇰🇷 한국 미션] 한국 퀴즈 3개 정답 맞히기", goal: 3, rewardCoins: 50, rewardXp: 80, type: 'quiz_correct' },
+            { id: 'm_2', country: 'china', title: "[🇨🇳 중국 미션] 중국 테마 1개 챕터 완주하기", goal: 1, rewardCoins: 100, rewardXp: 150, type: 'chapter_clear' },
+            { id: 'm_3', country: 'japan', title: "[🇯🇵 일본 미션] 일본 퀴즈 5개 도전하기", goal: 5, rewardCoins: 60, rewardXp: 100, type: 'quiz_correct' },
+            { id: 'm_4', country: 'all', title: "[🌐 통합 미션] 하트 충전 및 정답 10개 달성", goal: 10, rewardCoins: 150, rewardXp: 200, type: 'quiz_correct' }
+        ];
+
+        function trackMissionProgress(type) {
+            MISSIONS.forEach(m => {
+                if (m.type === type) {
+                    gameState.missionsProgress[m.id] = (gameState.missionsProgress[m.id] || 0) + 1;
+                    if (gameState.missionsProgress[m.id] === m.goal) {
+                        showToast(`🎯 미션 달성: ${m.title}`);
+                    }
+                }
+            });
+            saveGameState();
+            renderMissions();
+        }
+
+        function renderMissions(filter = 'all') {
+            const container = document.getElementById('missionListContainer');
+            container.innerHTML = '';
+
+            MISSIONS.forEach(m => {
+                if (filter !== 'all' && m.country !== 'all' && m.country !== filter) return;
+
+                const prog = Math.min(gameState.missionsProgress[m.id] || 0, m.goal);
+                const isCompleted = prog >= m.goal;
+                const pct = Math.round((prog / m.goal) * 100);
+
+                const item = document.createElement('div');
+                item.className = `glass-card p-4 rounded-xl border border-slate-800 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4`;
+
+                item.innerHTML = `
+                    <div class="space-y-1.5 flex-1">
+                        <div class="font-bold text-sm text-white">${m.title}</div>
+                        <div class="w-full bg-slate-900 h-2 rounded-full overflow-hidden max-w-md">
+                            <div class="bg-gradient-to-r from-emerald-500 to-teal-400 h-full transition-all" style="width: ${pct}%;"></div>
+                        </div>
+                        <div class="text-xs text-slate-400">진행도: ${prog} / ${m.goal} (${pct}%)</div>
+                    </div>
+
+                    <div class="flex items-center gap-3">
+                        <div class="text-xs text-amber-400 font-bold">
+                            +${m.rewardCoins} 코인 / +${m.rewardXp} XP
+                        </div>
+                        <button onclick="claimMissionReward('${m.id}')" ${!isCompleted ? 'disabled' : ''} className="px-4 py-2 rounded-xl text-xs font-bold transition ${
+                            isCompleted ? 'bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-md btn-bounce' : 'bg-slate-800 text-slate-600 cursor-not-allowed'
+                        }">
+                            ${isCompleted ? '보상 받기' : '진행 중'}
+                        </button>
+                    </div>
+                `;
+
+                container.appendChild(item);
+            });
+        }
+
+        function filterMissions(filter) {
+            playSfx('click');
+            ['all', 'korea', 'china', 'japan'].forEach(f => {
+                const btn = document.getElementById(`mFilter-${f}`);
+                if (btn) {
+                    btn.className = (f === filter) ? `px-3 py-1.5 rounded-lg text-xs font-bold bg-indigo-600 text-white` : `px-3 py-1.5 rounded-lg text-xs font-bold text-slate-400 hover:text-white`;
+                }
+            });
+            renderMissions(filter);
+        }
+
+        function claimMissionReward(mId) {
+            playSfx('correct');
+            const m = MISSIONS.find(item => item.id === mId);
+            if (m) {
+                gameState.coins += m.rewardCoins;
+                addXp(m.rewardXp);
+                gameState.missionsProgress[mId] = 0; // Reset for loop
+                saveGameState();
+                updateHUD();
+                renderMissions();
+                showToast(`🎁 보상 수령 완료: +${m.rewardCoins} 코인, +${m.rewardXp} XP!`);
+            }
+        }
+
+        function startHeartTimer() {
+            setInterval(() => {
+                if (gameState.hearts < gameState.maxHearts) {
+                    gameState.heartTimerSeconds--;
+                    if (gameState.heartTimerSeconds <= 0) {
+                        gameState.hearts++;
+                        gameState.heartTimerSeconds = 600;
+                        saveGameState();
+                        updateHUD();
+                        showToast('❤️ 하트가 1개 자동 충전되었습니다!');
+                    }
+                } else {
+                    gameState.heartTimerSeconds = 600;
+                }
+                updateHeartTimerUI();
+            }, 1000);
+        }
+
+        function updateHeartTimerUI() {
+            const timerText = document.getElementById('heartTimerText');
+            const countdownModal = document.getElementById('heartModalCountdown');
+
+            if (gameState.hearts >= gameState.maxHearts) {
+                if (timerText) timerText.innerText = 'MAX';
+                if (countdownModal) countdownModal.innerText = '가득 참';
+            } else {
+                const mins = Math.floor(gameState.heartTimerSeconds / 60);
+                const secs = gameState.heartTimerSeconds % 60;
+                const formatted = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+                if (timerText) timerText.innerText = formatted;
+                if (countdownModal) countdownModal.innerText = formatted;
+            }
+        }
+
+        function openHeartModal() {
+            playSfx('click');
+            document.getElementById('heartModal').classList.remove('hidden');
+        }
+
+        function closeHeartModal() {
+            playSfx('click');
+            document.getElementById('heartModal').classList.add('hidden');
+        }
+
+        function watchSimulatedAd() {
+            playSfx('click');
+            const btn = document.getElementById('adBtn');
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fa-solid fa-circle-notch animate-spin"></i> 광고 시청 중... (3초)`;
+
+            setTimeout(() => {
+                playSfx('clear');
+                gameState.hearts = Math.min(gameState.hearts + 2, gameState.maxHearts);
+                saveGameState();
+                updateHUD();
+                closeHeartModal();
+                showToast('🎬 광고 시청 완료! 하트 2개가 충전되었습니다!');
+                btn.disabled = false;
+                btn.innerHTML = `<i class="fa-solid fa-film"></i> 광고 시청하고 하트 +2 충전`;
+            }, 3000);
+        }
+
+        function instantHeartRefill() {
+            playSfx('clear');
+            gameState.hearts = gameState.maxHearts;
+            saveGameState();
+            updateHUD();
+            closeHeartModal();
+            showToast('⚡ 하트가 최대치로 완전 충전되었습니다!');
+        }
+
+        function addXp(amount) {
+            gameState.xp += amount;
+            const requiredXp = gameState.level * 100;
+            if (gameState.xp >= requiredXp) {
+                gameState.xp -= requiredXp;
+                gameState.level++;
+                gameState.maxHearts = Math.min(10, 5 + Math.floor(gameState.level / 2));
+                playSfx('levelUp');
+                showToast(`🎉 레벨 업! Lv.${gameState.level} 달성! 최대 하트 ${gameState.maxHearts}개로 확장!`);
+            }
+            updateHUD();
+        }
+
+        function updateHUD() {
+            document.getElementById('heartCountText').innerText = `${gameState.hearts}/${gameState.maxHearts}`;
+            document.getElementById('userLevelText').innerText = `Lv.${gameState.level}`;
+            document.getElementById('userCoinsText').innerText = gameState.coins;
+
+            const requiredXp = gameState.level * 100;
+            const pct = Math.min(100, Math.round((gameState.xp / requiredXp) * 100));
+            document.getElementById('userXpBar').style.width = `${pct}%`;
+        }
+
+        function switchTab(tabId) {
+            playSfx('click');
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.getElementById(tabId).classList.remove('hidden');
+
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.className = `tab-btn px-4 py-2 rounded-xl font-bold text-xs sm:text-sm flex items-center gap-2 transition bg-slate-800 text-slate-300 hover:bg-slate-700`;
+            });
+
+            const activeNav = document.getElementById(`nav-${tabId}`);
+            if (activeNav) {
+                activeNav.className = `tab-btn px-4 py-2 rounded-xl font-bold text-xs sm:text-sm flex items-center gap-2 transition bg-blue-600 text-white shadow-lg`;
+            }
+
+            if (tabId === 'galleryTab') renderGallery();
+            if (tabId === 'missionTab') renderMissions();
+        }
+
+        function showToast(msg) {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast-enter glass-card px-4 py-3 rounded-xl border border-amber-500/40 text-amber-200 text-xs sm:text-sm font-bold shadow-2xl flex items-center gap-2 bg-slate-900/90`;
+            toast.innerHTML = `<i class="fa-solid fa-bell text-amber-400"></i> <span>${msg}</span>`;
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.4s ease';
+                setTimeout(() => toast.remove(), 400);
+            }, 3000);
+        }
+
+        function getCountryFlag(c) { return c === 'korea' ? '🇰🇷' : c === 'china' ? '🇨🇳' : '🇯🇵'; }
+        function getCountryNameKR(c) { return c === 'korea' ? '한국' : c === 'china' ? '중국' : '일본'; }
+        function getThemeNameKR(t) { return t === 'city' ? '도시' : t === 'history' ? '역사' : '과학'; }
+
+        window.onload = function() {
+            loadGameState();
+            updateCountryUI();
+            updateThemeUI();
+            updateBannerInfo();
+            renderRoadmap();
+            renderMissions();
+            updateHUD();
+            startHeartTimer();
+        };
+    </script>
+</body>
+</html>
